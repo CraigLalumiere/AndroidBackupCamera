@@ -135,18 +135,45 @@ public class CamService extends Service {
             if (average <= threshold && visible) {
                 Log.v(TAG, "------ Invisible ------");
 
-                ViewGroup.LayoutParams params = textureView.getLayoutParams();
-                params.width = 1;
-                textureView.requestLayout();
+//                ViewGroup.LayoutParams params = textureView.getLayoutParams();
+//                params.width = 1;
+//                textureView.requestLayout();
+
+                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                        1,
+                        1,
+                        -1080,
+                        -1215,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                        PixelFormat.OPAQUE
+                );
+                params.alpha = 0.5f;
+
+                WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+                wm.updateViewLayout(rootView, params);
 
                 visible = false;
             }
             else if (average > threshold && !visible) {
                 Log.v(TAG, "------ Visible ------");
 
-                ViewGroup.LayoutParams params = textureView.getLayoutParams();
-                params.width = 1080;
-                textureView.requestLayout();
+//                ViewGroup.LayoutParams params = textureView.getLayoutParams();
+//                params.width = 1080;
+//                textureView.requestLayout();
+
+                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                        1080,
+                        810,
+                        0,
+                        -810,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                        PixelFormat.OPAQUE
+                );
+
+                WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+                wm.updateViewLayout(rootView, params);
 
                 visible = true;
             }
@@ -205,10 +232,15 @@ public class CamService extends Service {
         textureView.setSurfaceTextureListener(surfaceTextureListener);
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                1080,
+                810,
+                0,
+                -810,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.OPAQUE
         );
+//        params.alpha = 0.5f;
 
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         wm.addView(rootView, params);
@@ -230,6 +262,7 @@ public class CamService extends Service {
         public void onAttach(final UsbDevice device) {
             Log.v(TAG, "--onAttach " + device.getProductName() + ", " + device.getDeviceClass() + ", " + device.getDeviceSubclass());
             if ((device.getDeviceClass() == 239) & (device.getDeviceSubclass() == 2)) {
+                Toast.makeText(CamService.this.getApplicationContext(),"Attached " + device.getProductName(),Toast.LENGTH_SHORT).show();
                 mUSBMonitor.requestPermission(device);
             }
 //			Toast.makeText(MainActivity.this, "USB Device Attached", Toast.LENGTH_SHORT).show();
@@ -238,6 +271,7 @@ public class CamService extends Service {
         @Override
         public void onConnect(final UsbDevice device, final LibUVCCameraUSBMonitor.UsbControlBlock ctrlBlock, final boolean createNew) {
             Log.v(TAG, "--onConnect " + device.getProductName());
+            Toast.makeText(CamService.this.getApplicationContext(),"Connected " + device.getProductName(),Toast.LENGTH_SHORT).show();
             cameraHandler.open(ctrlBlock);
             startPreview();
         }
