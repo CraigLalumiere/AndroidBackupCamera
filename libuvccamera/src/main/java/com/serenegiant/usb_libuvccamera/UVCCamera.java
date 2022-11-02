@@ -451,7 +451,7 @@ public class UVCCamera {
 	public synchronized void startPreview() {
 		if (mCtrlBlock != null) {
 			nativeStartPreview(mNativePtr);
-			Log.e(TAG,"startPreview the UVC bottom layer preview was successfully called");
+			Log.v(TAG,"startPreview the UVC bottom layer preview was successfully called");
 			return;
 		}
 		Log.e(TAG,"Unsuccessful preview of mCtrlBlock="+mCtrlBlock);
@@ -464,7 +464,7 @@ public class UVCCamera {
 		setFrameCallback(null, 0);
 		if (mCtrlBlock != null) {
 			nativeStopPreview(mNativePtr);
-			Log.e(TAG,"stopPreview successfully called the UVC bottom layer to stop the preview");
+			Log.v(TAG,"stopPreview successfully called the UVC bottom layer to stop the preview");
 		}
 	}
 

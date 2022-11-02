@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 
 public class MyCameraHandler extends Handler {
-    private static final String TAG = "Camera Handler";
+    private static final String TAG = "My Camera Handler";
 
     private final Object mSync = new Object();
 
@@ -79,8 +79,9 @@ public class MyCameraHandler extends Handler {
 
 
     private void handleOpen(final LibUVCCameraUSBMonitor.UsbControlBlock ctrlBlock) {
-        Log.v(TAG, "handleOpen:");
+        Log.v(TAG, "handler handleOpen:");
         handleClose();
+        Log.v(TAG, "handler still handleOpen:");
         try {
             final UVCCamera camera = new UVCCamera();
             camera.open(ctrlBlock);
@@ -95,7 +96,7 @@ public class MyCameraHandler extends Handler {
     }
 
     private void handleClose() {
-        Log.v(TAG, "handleClose:");
+        Log.v(TAG, "handler handleClose:");
         final UVCCamera camera;
         synchronized (mSync) {
             camera = mUVCCamera;
@@ -111,7 +112,7 @@ public class MyCameraHandler extends Handler {
 
 
     private void handleStartPreview(final Object surface) {
-        Log.v(TAG, "handleStartPreview:");
+        Log.v(TAG, "handler handleStartPreview:");
         if ((mUVCCamera == null) || mIsPreviewing) return;
         try {
             mUVCCamera.setPreviewSize(mWidth, mHeight, 0,1, 31, mPreviewMode, mBandwidthFactor);
@@ -142,7 +143,7 @@ public class MyCameraHandler extends Handler {
 
 
     private void handleStopPreview() {
-        Log.v(TAG, "handleStopPreview:");
+        Log.v(TAG, "handler handleStopPreview:");
         if (mIsPreviewing) {
             if (mUVCCamera != null) {
                 mUVCCamera.stopPreview();
@@ -153,7 +154,7 @@ public class MyCameraHandler extends Handler {
             }
             callOnStopPreview();
         }
-        Log.v(TAG, "handleStopPreview:finished");
+        Log.v(TAG, "handler handleStopPreview:finished");
     }
 
 
@@ -232,6 +233,7 @@ public class MyCameraHandler extends Handler {
 
 
     protected void startPreview(final Object surface) {
+        Log.v(TAG, "delivering message start preview");
         if (!((surface instanceof SurfaceHolder) || (surface instanceof Surface) || (surface instanceof SurfaceTexture))) {
             throw new IllegalArgumentException("surface should be one of SurfaceHolder, Surface or SurfaceTexture");
         }
@@ -240,11 +242,13 @@ public class MyCameraHandler extends Handler {
 
 
     public void open(final LibUVCCameraUSBMonitor.UsbControlBlock ctrlBlock) {
+        Log.v(TAG, "delivering message open");
+        Log.v(TAG, "looper = " + getLooper().toString());
         sendMessage(obtainMessage(MSG_OPEN, ctrlBlock));
     }
 
-
     public void close() {
+        Log.v(TAG, "delivering message close");
         sendEmptyMessage(MSG_CLOSE);
     }
 

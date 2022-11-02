@@ -18,6 +18,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.usb.UsbConfiguration;
 import android.hardware.usb.UsbDevice;
 import android.media.Image;
 import android.media.ImageReader;
@@ -51,13 +52,16 @@ public class CamService extends Service {
     final static int ONGOING_NOTIFICATION_ID = 6660;
     final static String CHANNEL_ID = "cam_service_channel_id";
 
-    private boolean visible = true;
+    private boolean visible = false;
 
 
 
     // UI
     private View rootView;
     private TextureView textureView;
+
+    WindowManager.LayoutParams invisibleParams;
+    WindowManager.LayoutParams visibleParams;
 
 
     // UVC Camera
@@ -139,19 +143,10 @@ public class CamService extends Service {
 //                params.width = 1;
 //                textureView.requestLayout();
 
-                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                        1,
-                        1,
-                        -1080,
-                        -1215,
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                        PixelFormat.OPAQUE
-                );
-                params.alpha = 0.5f;
+
 
                 WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-                wm.updateViewLayout(rootView, params);
+                wm.updateViewLayout(rootView, invisibleParams);
 
                 visible = false;
             }
@@ -162,18 +157,9 @@ public class CamService extends Service {
 //                params.width = 1080;
 //                textureView.requestLayout();
 
-                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                        1080,
-                        810,
-                        0,
-                        -810,
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                        PixelFormat.OPAQUE
-                );
 
                 WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-                wm.updateViewLayout(rootView, params);
+                wm.updateViewLayout(rootView, visibleParams);
 
                 visible = true;
             }
@@ -185,6 +171,26 @@ public class CamService extends Service {
         Log.v(TAG, "--service on create");
         super.onCreate();
         startForeground();
+
+        invisibleParams = new WindowManager.LayoutParams(
+                1,
+                1,
+                -1080,
+                -1215,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.OPAQUE
+        );
+
+        visibleParams = new WindowManager.LayoutParams(
+                1080,
+                810,
+                0,
+                -810,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSPARENT
+        );
 
 
         mUSBMonitor = new LibUVCCameraUSBMonitor(this, mOnDeviceConnectListener);
@@ -231,19 +237,19 @@ public class CamService extends Service {
         textureView = rootView.findViewById(R.id.texPreview);
         textureView.setSurfaceTextureListener(surfaceTextureListener);
 
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                1080,
-                810,
-                0,
-                -810,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.OPAQUE
-        );
+//        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+//                1080,
+//                810,
+//                0,
+//                -810,
+//                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+//                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+//                PixelFormat.OPAQUE
+//        );
 //        params.alpha = 0.5f;
 
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        wm.addView(rootView, params);
+        wm.addView(rootView, invisibleParams);
     }
 
 
@@ -260,7 +266,7 @@ public class CamService extends Service {
     private final LibUVCCameraUSBMonitor.OnDeviceConnectListener mOnDeviceConnectListener = new LibUVCCameraUSBMonitor.OnDeviceConnectListener() {
         @Override
         public void onAttach(final UsbDevice device) {
-            Log.v(TAG, "--onAttach " + device.getProductName() + ", " + device.getDeviceClass() + ", " + device.getDeviceSubclass());
+            Log.v(TAG, "--onAttach " + device.getProductName() + ", class = " + device.getDeviceClass() + ", subclass = " + device.getDeviceSubclass());
             if ((device.getDeviceClass() == 239) & (device.getDeviceSubclass() == 2)) {
                 Toast.makeText(CamService.this.getApplicationContext(),"Attached " + device.getProductName(),Toast.LENGTH_SHORT).show();
                 mUSBMonitor.requestPermission(device);
@@ -280,7 +286,7 @@ public class CamService extends Service {
         private void startPreview() {
 //            final SurfaceTexture st = MainActivity.mUVCCameraView.getSurfaceTexture();
             final SurfaceTexture st = textureView.getSurfaceTexture();
-            Log.v(TAG, "starting preview; SurfaceTexture null =  " + (st == null));
+            Log.v(TAG, "service is starting preview; SurfaceTexture null =  " + (st == null));
             if (st != null) {
                 cameraHandler.startPreview(new Surface(st));
             }
@@ -289,6 +295,10 @@ public class CamService extends Service {
         @Override
         public void onDisconnect(final UsbDevice device, final LibUVCCameraUSBMonitor.UsbControlBlock ctrlBlock) {
             Log.v(TAG, "--onDisconnect " + device.getProductName());
+            if ((device.getDeviceClass() == 239) & (device.getDeviceSubclass() == 2)) {
+                stopSelf();
+//                cameraHandler.close();
+            }
         }
         @Override
         public void onDettach(final UsbDevice device) {
